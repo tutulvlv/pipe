@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.pipe.dao.SupplierDAO">
+	<insert id="insertSupplier" parameterType="com.pipe.entity.Supplier">
+		insert into supplier(old_name,new_name,per_name,sup_tel,email,credit) 
+		values(#{old_name},#{new_name},#{per_name},#{sup_tel},#{email},#{credit})
+	</insert>
+	<select id="getSupplierId" parameterType="java.util.Map" resultType="Integer">
+		select supplier_id from supplier 
+		where new_name=#{new_name} and sup_tel=#{sup_tel}
+	</select>
+	<insert id="insertSupExcel" parameterType="com.pipe.entity.SupplierExcel">
+		insert into supplier_excel(cus_excel_id,sup_excel_name,supplier_id,quote_time) 
+		values(#{cus_excel_id},#{sup_excel_name},#{supplier_id},#{quote_time})
+	</insert>
+	
+	<select id="getLastId" resultType="Integer" parameterType="java.util.Map">
+		select sup_excel_id from supplier_excel 
+		where sup_excel_name=#{sup_excel_name} and quote_time=#{quote_time}
+	</select>
+	
+	<insert id="insertSupExcDet" parameterType="com.pipe.entity.SupExcDet">
+		insert into sup_exc_det(sup_excel_id,factory,retrievalmodel,quantity,batch,price) 
+		values(#{sup_excel_id},#{factory},#{retrievalmodel},#{quantity},#{batch},#{price})
+	</insert>
+	
+	<select id="getSupExcDetView" parameterType="Integer" resultType="com.pipe.vo.SupExcDetView">
+		SELECT sed.factory,sed.retrievalmodel,sed.batch,sed.quantity,
+			MAX(sed.price) maxprice,count(sed.factory) sup_sum,se.quote_time
+		FROM supplier_excel se 
+		JOIN sup_exc_det sed 
+		on se.sup_excel_id=sed.sup_excel_id
+		where se.cus_excel_id=#{cus_excel_id}
+		GROUP BY sed.retrievalmodel
+	</select>
+	
+	<select id="getSupQuoteDetByModel" parameterType="String" resultType="com.pipe.vo.SupQuoDetView">
+		SELECT sed.price,se.quote_time,s.new_name,s.per_name,
+			s.sup_tel,s.email
+		FROM supplier s join supplier_excel se
+		ON s.supplier_id=se.supplier_id
+		JOIN (select * from sup_exc_det where retrievalmodel=#{retrievalmodel}) sed
+		ON sed.sup_excel_id=se.sup_excel_id
+		ORDER BY sed.price desc
+	</select>
+	<insert id="insertVictor" parameterType="String">
+		insert into victor_history(uuid,time) values(#{uuid},NOW());
+	</insert>
+</mapper>

@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.pipe.dao.CustomerDAO" >
+	<insert id="insertCustomer" parameterType="com.pipe.entity.Customer">
+		insert into customer(customer_com,customer_name,customer_tel) 
+		values(#{customer_com},#{customer_name},#{customer_tel})
+	</insert>
+	<select id="getCustomerId" parameterType="java.util.Map" resultType="Integer">
+		select customer_id from customer where customer_name=#{customer_name} and customer_tel=#{customer_tel}
+	</select>
+	
+	<insert id="insertCusExcel" parameterType="com.pipe.entity.CustomerExcel">
+		insert into customer_excel(customer_id,excel_name,upload_time,clerk_id) 
+		values(#{customer_id},#{excel_name},#{upload_time},#{clerk_id})
+	</insert>
+	
+	<select id="getLastId" resultType="Integer" parameterType="java.util.Map">
+		select cus_excel_id from customer_excel 
+		where excel_name=#{excel_name} and upload_time=#{upload_time}
+	</select>
+	
+	<insert id="insertCusExcDet" parameterType="com.pipe.entity.CusExcDet">
+		insert into cus_exc_det(cus_excel_id,ic_name,factory,retrievalmodel,quantity,batch) 
+		values(#{cus_excel_id},#{ic_name},#{factory},#{retrievalmodel},#{quantity},#{batch})
+	</insert>
+	
+	<select id="getCusExcDetById" parameterType="Integer" resultType="com.pipe.entity.CusExcDet">
+		select cus_excel_id,ic_name,factory,retrievalmodel,quantity,batch
+		from cus_exc_det where cus_excel_id=#{excel_id}
+	</select>
+	
+	<select id="getTotalCusExc" resultType="Integer">
+		select count(cus_excel_id) from customer_excel
+	</select>
+	<select id="getAllCusExcel" parameterType="java.util.Map" resultType="com.pipe.vo.CusExcelView">
+		select ce.cus_excel_id,ce.customer_id,ce.excel_name,
+			cus.customer_com,ce.upload_time,cle.clerkname
+		from customer cus join customer_excel ce
+		on cus.customer_id=ce.customer_id
+		join clerk cle on ce.clerk_id=cle.clerkid
+		order by ce.cus_excel_id desc
+		limit #{start},#{pageSize}
+	</select>
+	<!-- 批量插入 -->
+	<insert id="insertSend" parameterType="ArrayList">
+	    insert into send_history(cus_excel_id,uuid) values
+	    <foreach collection="list" item="i" index="index" separator=",">
+	    	(#{i.cus_excel_id},#{i.uuid})
+	    </foreach>
+	</insert>
+	
+</mapper>

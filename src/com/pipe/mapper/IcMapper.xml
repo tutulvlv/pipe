@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.pipe.dao.IcDAO" >
+	<select id="getIcByModel" resultType="com.pipe.vo.IcView">
+		select ic1.uuid,ic1.Businname,ic1.mobnum,ic1.retrievalmodel,ic1.factory,icqq.qq
+		from (select uuid,Businname,mobnum,retrievalmodel,factory,pagesize from ic where retrievalmodel in 
+			<foreach item="item" index="index" collection="list" open="(" separator="," close=")">
+				#{item}
+			</foreach>)ic1
+		JOIN icqq ON ic1.uuid=icqq.uuid
+		group by ic1.Businname order by ic1.pagesize desc
+	</select>
+	<select id="getViewHistory" resultType="com.pipe.vo.ViewHistory" parameterType="java.util.Map">
+		SELECT victor_history.time,ic.Businname,ic.retrievalmodel,ic.mobnum,ic.address,ic.factory,icqq.qq
+		FROM victor_history,ic,icqq
+		WHERE ic.uuid = victor_history.uuid AND icqq.uuid = victor_history.uuid
+		GROUP BY victor_history.time
+		ORDER BY victor_history.history_id desc
+		LIMIT #{start},#{pageSize}
+	</select>
+	<select id="getTotalViewHistory" resultType="Integer">
+		select count(*) from (SELECT victor_history.history_id
+		FROM victor_history,ic,icqq
+		WHERE ic.uuid = victor_history.uuid AND icqq.uuid = victor_history.uuid
+		GROUP BY victor_history.time) v
+	</select>
+	<select id="getSendHistory" resultType="com.pipe.vo.SendHistory" parameterType="java.util.Map">
+		SELECT customer_excel.excel_name,customer_excel.upload_time,ic.Businname,ic.mobnum,ic.address,icqq.qq
+		FROM send_history ,customer_excel ,ic ,icqq
+		WHERE send_history.uuid = ic.uuid AND 
+		send_history.cus_excel_id = customer_excel.cus_excel_id AND
+		ic.uuid = icqq.uuid
+		GROUP BY ic.Businname
+		ORDER BY send_history.send_id DESC 
+		LIMIT #{start},#{pageSize}
+	</select>
+	<select id="getTotalSendHistory" resultType="Integer">
+		select count(*) from (SELECT send_history.send_id
+		FROM send_history ,customer_excel ,ic ,icqq
+		WHERE send_history.uuid = ic.uuid AND 
+		send_history.cus_excel_id = customer_excel.cus_excel_id AND
+		ic.uuid = icqq.uuid
+		GROUP BY ic.Businname) v
+	</select>
+</mapper>
